@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Dev Flashcard & Quiz</title>
+    <style>
+        /* ==================== CSS ==================== */
+        :root {
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --bg-color: #F3F4F6;
+            --card-bg: #FFFFFF;
+            --text-main: #1F2937;
+            --text-muted: #6B7280;
+            --success: #10B981;
+            --danger: #EF4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 600px;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            padding: 30px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            border: none;
+            background-color: #E5E7EB;
+            color: var(--text-muted);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        /* --- Flashcard Styles --- */
+        #flashcard-section {
+            display: block;
+        }
+
+        .flashcard-container {
+            perspective: 1000px;
+            width: 100%;
+            height: 250px;
+            margin-bottom: 20px;
+        }
+
+        .flashcard {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #E5E7EB;
+            text-align: center;
+            font-size: 1.2rem;
+            background-color: white;
+        }
+
+        .card-back {
+            transform: rotateY(180deg);
+            background-color: #F8FAFC;
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .card-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            background-color: var(--primary);
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        button:disabled {
+            background-color: #D1D5DB;
+            cursor: not-allowed;
+        }
+
+        /* --- Quiz Styles --- */
+        #quiz-section, #result-section {
+            display: none;
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .timer {
+            background-color: var(--danger);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .question-text {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option-btn {
+            background-color: white;
+            color: var(--text-main);
+            border: 2px solid #E5E7EB;
+            text-align: left;
+            padding: 12px 15px;
+            font-weight: normal;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            background-color: #F3F4F6;
+            border-color: var(--primary);
+        }
+
+        .option-btn.correct {
+            background-color: #D1FAE5;
+            border-color: var(--success);
+            color: #065F46;
+        }
+
+        .option-btn.wrong {
+            background-color: #FEE2E2;
+            border-color: var(--danger);
+            color: #991B1B;
+        }
+
+        .quiz-footer {
+            margin-top: 20px;
+            text-align: right;
+        }
+
+        #next-quiz-btn {
+            display: none;
+        }
+
+        /* --- Result Styles --- */
+        .result-container {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .score-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 0 auto 20px auto;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>💡 Web Dev Mastery</h1>
+            <div class="tabs">
+                <button class="tab-btn active" id="tab-flashcard" onclick="switchMode('flashcard')">Flashcard</button>
+                <button class="tab-btn" id="tab-quiz" onclick="switchMode('quiz')">Mode Kuis</button>
+            </div>
+        </header>
+
+        <section id="flashcard-section">
+            <div class="flashcard-container" onclick="flipCard()">
+                <div class="flashcard" id="flashcard-el">
+                    <div class="card-face">
+                        <span class="card-label">Pertanyaan</span>
+                        <p id="fc-question">Teks pertanyaan akan muncul di sini.</p>
+                    </div>
+                    <div class="card-face card-back">
+                        <span class="card-label">Jawaban</span>
+                        <p id="fc-answer">Teks jawaban akan muncul di sini.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="controls">
+                <button id="prev-btn" onclick="prevCard()">&#8592; Sebelumnya</button>
+                <span id="fc-counter" style="align-self: center; color: var(--text-muted);">1 / 5</span>
+                <button id="next-btn" onclick="nextCard()">Berikutnya &#8594;</button>
+            </div>
+        </section>
+
+        <section id="quiz-section">
+            <div class="quiz-header">
+                <span id="quiz-counter">Pertanyaan: 1/5</span>
+                <span class="timer">Waktu: <span id="time-left">15</span>s</span>
+            </div>
+            <div class="question-text" id="quiz-question">
+                Teks pertanyaan kuis akan muncul di sini?
+            </div>
+            <div class="options" id="quiz-options">
+                </div>
+            <div class="quiz-footer">
+                <button id="next-quiz-btn" onclick="nextQuizQuestion()">Pertanyaan Selanjutnya</button>
+            </div>
+        </section>
+
+        <section id="result-section">
+            <div class="result-container">
+                <h2>Kuis Selesai!</h2>
+                <p style="margin: 10px 0; color: var(--text-muted);">Skor Akhir Anda:</p>
+                <div class="score-circle" id="final-score">0/5</div>
+                <button onclick="resetQuiz()">Ulangi Kuis</button>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        /* ==================== JAVASCRIPT ==================== */
+        
+        // Data Pertanyaan Terpusat
+        const dataSet = [
+            {
+                question: "Apa kepanjangan dari HTML?",
+                answer: "HyperText Markup Language",
+                options: ["HyperLinks and Text Markup Language", "Home Tool Markup Language", "HyperText Markup Language", "HyperText Machine Language"],
+                correctIndex: 2
+            },
+            {
+                question: "Properti CSS apa yang digunakan untuk mengubah warna teks?",
+                answer: "color",
+                options: ["text-color", "fgcolor", "color", "font-color"],
+                correctIndex: 2
+            },
+            {
+                question: "Di mana tempat yang benar untuk menyisipkan JavaScript di HTML?",
+                answer: "Di bagian <body> atau <head>",
+                options: ["Hanya di <head>", "Hanya di <body>", "Di bagian <body> atau <head>", "Di file eksternal saja"],
+                correctIndex: 2
+            },
+            {
+                question: "Apa nama framework CSS populer yang menggunakan sistem class utilitas?",
+                answer: "Tailwind CSS",
+                options: ["Bootstrap", "Tailwind CSS", "Foundation", "Materialize"],
+                correctIndex: 1
+            },
+            {
+                question: "Bagaimana cara mendeklarasikan variabel yang nilainya tidak bisa diubah di JavaScript ES6?",
+                answer: "const",
+                options: ["var", "let", "const", "static"],
+                correctIndex: 2
+            }
+        ];
+
+        // --- Logika Flashcard ---
+        let currentCardIndex = 0;
+        const flashcardEl = document.getElementById('flashcard-el');
+        
+        function loadFlashcard() {
+            document.getElementById('fc-question').textContent = dataSet[currentCardIndex].question;
+            document.getElementById('fc-answer').textContent = dataSet[currentCardIndex].answer;
+            document.getElementById('fc-counter').textContent = `${currentCardIndex + 1} / ${dataSet.length}`;
+            
+            // Reset state animasi flip
+            flashcardEl.classList.remove('flipped');
+            
+            // Atur status tombol
+            document.getElementById('prev-btn').disabled = currentCardIndex === 0;
+            document.getElementById('next-btn').disabled = currentCardIndex === dataSet.length - 1;
+        }
+
+        function flipCard() {
+            flashcardEl.classList.toggle('flipped');
+        }
+
+        function nextCard() {
+            if (currentCardIndex < dataSet.length - 1) {
+                currentCardIndex++;
+                loadFlashcard();
+            }
+        }
+
+        function prevCard() {
+            if (currentCardIndex > 0) {
+                currentCardIndex--;
+                loadFlashcard();
+            }
+        }
+
+        // --- Logika Kuis ---
+        let currentQuizIndex = 0;
+        let score = 0;
+        let timeLeft = 15;
+        let timerInterval;
+
+        function startQuiz() {
+            currentQuizIndex = 0;
+            score = 0;
+            document.getElementById('quiz-section').style.display = 'block';
+            document.getElementById('result-section').style.display = 'none';
+            loadQuizQuestion();
+        }
+
+        function loadQuizQuestion() {
+            clearInterval(timerInterval);
+            timeLeft = 15;
+            document.getElementById('time-left').textContent = timeLeft;
+            document.getElementById('next-quiz-btn').style.display = 'none';
+            
+            const qData = dataSet[currentQuizIndex];
+            document.getElementById('quiz-counter').textContent = `Pertanyaan: ${currentQuizIndex + 1}/${dataSet.length}`;
+            document.getElementById('quiz-question').textContent = qData.question;
+            
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = ''; // Bersihkan opsi sebelumnya
+
+            qData.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = opt;
+                btn.onclick = () => selectAnswer(index, btn);
+                optionsContainer.appendChild(btn);
+            });
+
+            startTimer();
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('time-left').textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    handleTimeout();
+                }
+            }, 1000);
+        }
+
+        function handleTimeout() {
+            const options = document.querySelectorAll('.option-btn');
+            options.forEach(opt => opt.disabled = true);
+            
+            // Sorot jawaban yang benar karena waktu habis
+            const correctIdx = dataSet[currentQuizIndex].correctIndex;
+            options[correctIdx].classList.add('correct');
+            
+            document.getElementById('next-quiz-btn').style.display = 'inline-block';
+        }
+
+        function selectAnswer(selectedIndex, selectedBtn) {
+            clearInterval(timerInterval); // Hentikan waktu
+            const correctIdx = dataSet[currentQuizIndex].correctIndex;
+            const options = document.querySelectorAll('.option-btn');
+            
+            // Matikan semua tombol
+            options.forEach(opt => opt.disabled = true);
+
+            if (selectedIndex === correctIdx) {
+                selectedBtn.classList.add('correct');
+                score++;
+            } else {
+                selectedBtn.classList.add('wrong');
+                // Tampilkan jawaban yang benar
+                options[correctIdx].classList.add('correct');
+            }
+
+            document.getElementById('next-quiz-btn').style.display = 'inline-block';
+        }
+
+        function nextQuizQuestion() {
+            if (currentQuizIndex < dataSet.length - 1) {
+                currentQuizIndex++;
+                loadQuizQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            document.getElementById('quiz-section').style.display = 'none';
+            document.getElementById('result-section').style.display = 'block';
+            document.getElementById('final-score').textContent = `${score}/${dataSet.length}`;
+        }
+
+        function resetQuiz() {
+            startQuiz();
+        }
+
+        // --- Logika Switcher Mode ---
+        function switchMode(mode) {
+            // Hentikan timer jika pindah dari kuis
+            clearInterval(timerInterval);
+
+            // Update UI Tab
+            document.getElementById('tab-flashcard').classList.toggle('active', mode === 'flashcard');
+            document.getElementById('tab-quiz').classList.toggle('active', mode === 'quiz');
+
+            // Tampilkan/Sembunyikan Section
+            if (mode === 'flashcard') {
+                document.getElementById('flashcard-section').style.display = 'block';
+                document.getElementById('quiz-section').style.display = 'none';
+                document.getElementById('result-section').style.display = 'none';
+                currentCardIndex = 0;
+                loadFlashcard();
+            } else {
+                document.getElementById('flashcard-section').style.display = 'none';
+                startQuiz();
+            }
+        }
+
+        // Inisialisasi awal saat halaman dimuat
+        loadFlashcard();
+
+    </script>
+</body>
+</html>
